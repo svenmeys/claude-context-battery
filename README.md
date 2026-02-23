@@ -1,99 +1,89 @@
 # claude-context-battery
 
-A visual context window battery for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). See exactly how much context you have left — before auto-compact surprises you.
+A context window battery for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Know when you're about to get auto-compacted — before it ruins your flow.
 
 ```
 ⎇ main | Opus 4.6 [██████░░░░] 62% | $0.36 | 45m
-                   ^^^^^^^^^^^^^^^^
-                   this part
 ```
 
-<!-- TODO: Replace with actual screenshot -->
+<!-- TODO: Add screenshot showing the battery in action -->
 <!-- ![Screenshot](screenshot.png) -->
 
-## Why
+## Why this exists
 
-Claude Code auto-compacts your conversation at ~80% context usage. When that happens mid-task, you lose conversation history and the agent may lose track of what it was doing.
+Claude Code silently auto-compacts your conversation at ~80% context usage. When it hits mid-task, the agent loses history and sometimes loses the plot entirely. You don't get a warning.
 
-The battery gives you a heads-up. Green means plenty of room. Orange means start wrapping up. Red means compact is imminent.
+This gives you one. A 10-segment battery bar, color-coded, right in your status line:
 
-The bar is **normalized to 80%** of your context window — when it shows 100%, you still have ~20% buffer. This gives you a realistic "time to `/clear`" indicator instead of raw token math.
+| Color | Range | What to do |
+|-------|-------|------------|
+| Green | <50% | Keep going |
+| Orange | 50-80% | Wrap up or start a new session |
+| Red | >80% | Compact is about to fire |
 
-| Color | Range | Meaning |
-|-------|-------|---------|
-| Green | <50% | Plenty of room |
-| Orange | 50-80% | Start wrapping up |
-| Red | >80% | Compact is imminent |
+The bar is **normalized to 80%** — when it shows 100%, you've still got ~20% buffer. It shows "time to `/clear`", not raw token math.
 
 ## Install
 
-This is a [ccstatusline](https://github.com/sirmalloc/ccstatusline) custom command widget. You need ccstatusline installed first.
+Requires [ccstatusline](https://github.com/sirmalloc/ccstatusline) — the customizable status line framework for Claude Code.
 
-### 1. Install ccstatusline (if you haven't)
+### 1. Install ccstatusline
 
 ```bash
 npm install -g ccstatusline
 ```
 
-### 2. Download the battery script
+### 2. Download the script
 
 ```bash
-# Create widgets directory
 mkdir -p ~/.claude/widgets
 
-# Download
 curl -o ~/.claude/widgets/context-battery.sh \
   https://raw.githubusercontent.com/svenmeys/claude-context-battery/main/context-battery.sh
 
-# Make executable
 chmod +x ~/.claude/widgets/context-battery.sh
 ```
 
-### 3. Add to ccstatusline
+### 3. Configure
 
-Run `ccstatusline` to open the configuration TUI, then:
+Run `ccstatusline` to open the TUI, then:
 
 1. Select your status line
 2. Add a **Custom Command** widget
-3. Set command path to `~/.claude/widgets/context-battery.sh`
-4. Set timeout to `500` (ms)
-5. Enable **Preserve Colors** (important — the battery uses ANSI colors)
-6. Save and exit
+3. Set command path: `~/.claude/widgets/context-battery.sh`
+4. Set timeout: `500`
+5. Enable **Preserve Colors** (the battery uses ANSI colors)
+6. Save
 
-That's it. The battery appears in your Claude Code status line.
+Done. Battery shows up on your next Claude Code prompt.
 
 ## How it works
 
-Claude Code pipes session JSON to ccstatusline on every prompt. ccstatusline passes that JSON to custom command widgets via stdin. The battery script:
+Claude Code pipes session JSON to ccstatusline on every prompt. ccstatusline forwards that JSON to custom command widgets via stdin. The battery script:
 
-1. Reads `.context_window.context_window_size` and `.context_window.current_usage` from the JSON
+1. Reads `context_window.context_window_size` and `context_window.current_usage`
 2. Sums all input tokens (direct + cache creation + cache read)
-3. Calculates usage as a percentage, normalized to 80% of the window
-4. Renders a 10-segment bar with ANSI color coding
+3. Normalizes to 80% of the window size
+4. Renders a 10-segment bar with ANSI color
 
-### Test it locally
+### Test locally
 
 ```bash
 cat example-payload.json | bash context-battery.sh
-# Output: [██████████] 88% (in orange)
 ```
-
-## Dependencies
-
-- **bash** — any modern version
-- **jq** — JSON parser ([install](https://jqlang.github.io/jq/download/))
-
-If `jq` is missing, the script gracefully outputs an empty bar (`░░░░░░░░░░`) instead of crashing.
 
 ## Requirements
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI
-- [ccstatusline](https://github.com/sirmalloc/ccstatusline) — the status line framework this plugs into
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+- [ccstatusline](https://github.com/sirmalloc/ccstatusline)
+- [jq](https://jqlang.github.io/jq/download/) (degrades gracefully if missing — shows an empty bar instead of crashing)
 
 ## License
 
 [MIT](LICENSE)
 
-## Credits
+## Author
+
+[Sven Meys](https://github.com/svenmeys) — building developer tools for AI-native workflows.
 
 Built for the [ccstatusline](https://github.com/sirmalloc/ccstatusline) ecosystem by [@sirmalloc](https://github.com/sirmalloc).
